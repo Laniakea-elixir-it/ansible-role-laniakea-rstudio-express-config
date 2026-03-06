@@ -23,7 +23,7 @@
   no_log: True
   when: rstudio_username == 'studio'
 
- name: Create RStudio user and set rstudio password
+- name: Create RStudio user and set rstudio password
   user:
     name: "{{ rstudio_username }}"
     groups: wheel # sudo is the group on ubuntu. on rocky it is wheel
