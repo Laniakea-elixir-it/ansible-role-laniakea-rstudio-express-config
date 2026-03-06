@@ -1,0 +1,51 @@
+---
+# By default a rstudio user is created during cloud image creation on laniakea-ci-infrastructure
+# If same user is used. the password is changed.
+# If a new userd is created the old one is deleted
+
+- name: Get user password externally (e.g. from Vault) if available
+  set_fact:
+    __password__: '{{ rstudio_password }}'
+  no_log: True
+  when: rstudio_password is defined
+
+- name: Alternatively create user random password.
+  set_fact:
+    __password__: "{{ lookup('password', '/dev/null length=20') }}"
+  no_log: True
+  when: rstudio_password is defined and rstudio_password == 'random'
+
+- name: Update RStudio user password
+  user:
+    name: "{{ rstudio_username }}"
+    password: "{{ __password__ | string |  password_hash('sha512') }}"
+    update_password: always
+  no_log: True
+  when: rstudio_username == 'studio'
+
+ name: Create RStudio user and set rstudio password
+  user:
+    name: "{{ rstudio_username }}"
+    groups: wheel # sudo is the group on ubuntu. on rocky it is wheel
+    state: present
+    password: "{{ __password__ | string | password_hash('sha512') }}"
+    update_password: on_create
+  no_log: True
+  when: rstudio_username != 'studio'
+
+- name: Remove studio user and home directory if no more needed
+  user:
+    name: studio
+    state: absent
+    remove: yes
+  when: rstudio_username != 'studio'
+
+- name: Save password on file
+  copy:
+    content: "{{ __password__ }}"
+    dest: /home/{{ rstudio_username }}/pssw.txt
+    force: no
+    owner: "{{ rstudio_username }}"
+    group: "{{ rstudio_username }}"
+  no_log: True
+  when: rstudio_password == 'random'

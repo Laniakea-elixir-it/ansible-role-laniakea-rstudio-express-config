@@ -1,8 +1,8 @@
 ---
 # tasks file for ansible-role-laniakea-rstudio-express-config
 
-- name: Change RStudio user password
-  import_tasks: change_password.yml
+- name: Create or update RStudio user and password
+  import_tasks: rstudio_user.yml
 
 - name: Start rstudio-server
   systemd:
